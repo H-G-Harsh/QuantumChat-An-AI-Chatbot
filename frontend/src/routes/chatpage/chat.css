@@ -1,0 +1,49 @@
+.chat {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+
+    .wrapper {
+        flex: 1;
+        overflow: auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .chats {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Reduced gap between AI response and messages */
+
+            p, li {
+                margin: 10px 0px;
+            }
+
+            .message {
+                padding: 20px;
+                
+                     /* Ensure long words break */
+                    max-height: 100%; /* Ensure full content displays */
+                    overflow: visible;/* Allow scrolling if the content exceeds the container size */
+                  
+                  
+                &.user {
+                    background-color: #2c2937;
+                    border-radius: 20px;
+                    max-width: 80%;
+                    align-self: flex-end;
+                }
+            }
+        }
+    }
+
+    .wrapper::-webkit-scrollbar {
+        display: none;
+    }
+
+   
+}
