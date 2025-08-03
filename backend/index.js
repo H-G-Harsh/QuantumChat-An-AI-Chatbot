@@ -1,6 +1,8 @@
 import express from "express";
 import ImageKit from "imagekit";
 import cors from "cors";
+import path from "path";
+import url, { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
 import userchat from "./models/userchat.js";
@@ -9,6 +11,8 @@ import { generateChatResponse } from './utils/chatHelper.js';
 
 const port = process.env.PORT || 3000;
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors({
   origin: process.env.CLIENT_URL,
@@ -161,6 +165,11 @@ app.post('/api/generate-response', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(401).send('Unauthenticated!');
+});
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
 });
 
 app.listen(port, () => {
