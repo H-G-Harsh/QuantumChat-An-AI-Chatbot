@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './chat.css'; // Import your chat styles
 import Newprompt from './../../components/newprompt';
 import { useQuery } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import { IKImage } from 'imagekitio-react';
 const Chat = () => {
   const path = useLocation().pathname;
   const chatId = path.split("/").pop();
+  const wrapperRef = useRef(null);
 
   const { isPending, error, data } = useQuery({
     queryKey: ["chat", chatId],
@@ -18,6 +19,24 @@ const Chat = () => {
       }).then((res) => res.json()),
   });
 
+  // Scroll to bottom when data changes (chat history loads)
+  useEffect(() => {
+    if (data && wrapperRef.current) {
+      setTimeout(() => {
+        wrapperRef.current.scrollTop = wrapperRef.current.scrollHeight;
+      }, 100);
+    }
+  }, [data]);
+
+  // Scroll to bottom when component mounts
+  useEffect(() => {
+    if (wrapperRef.current) {
+      setTimeout(() => {
+        wrapperRef.current.scrollTop = wrapperRef.current.scrollHeight;
+      }, 200);
+    }
+  }, []);
+
   // if (data) {
   //   console.log("Chat history:", data?.history); // Debugging line
   // }
@@ -25,7 +44,7 @@ const Chat = () => {
 
   return (
     <div className='chat'>
-      <div className="wrapper">
+      <div className="wrapper" ref={wrapperRef}>
         <div className="chats">
           {isPending
             ? "loading..."
@@ -50,10 +69,7 @@ const Chat = () => {
                 </>
               ))}
               
-        
-          {data &&
-           <Newprompt data={data} />}
-          
+          {data && <Newprompt data={data} />}
         </div>
       </div>
     </div>
