@@ -2,7 +2,7 @@ import './chatlist.css';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-const Chatlist = () => {
+const Chatlist = ({ onLinkClick }) => {
   const { isPending, error, data } = useQuery({
     queryKey: ['userChats'],
     queryFn: () =>
@@ -14,9 +14,9 @@ const Chatlist = () => {
   return (
     <div className='chatlist'>
       <span className="title">DASHBOARD</span>
-      <Link to="/dashboard">Create an new chat</Link>
-      <Link to="/">Explore QuantumChat</Link>
-      <Link to="/">Contact</Link>
+      <Link to="/dashboard" onClick={onLinkClick}>Create an new chat</Link>
+      <Link to="/" onClick={onLinkClick}>Explore QuantumChat</Link>
+      <Link to="/" onClick={onLinkClick}>Contact</Link>
       <hr />
       <span className="title">RECENT CHATS</span>
       <div className="list">
@@ -27,7 +27,7 @@ const Chatlist = () => {
           : data
               ?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort by newest first
               .map((chat) => (
-                <Link to={`/dashboard/chat/${chat._id}`} key={chat._id}>
+                <Link to={`/dashboard/chat/${chat._id}`} key={chat._id} onClick={onLinkClick}>
                   {chat.title}
                 </Link>
               ))}

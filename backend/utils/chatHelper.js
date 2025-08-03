@@ -3,14 +3,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash", // Specify the model
+  model: "gemini-2.0-flash", // Specify the model
 });
 
 export const generateChatResponse = async (query) => {
-  const prompt = `You are a helpful assistant. Based on the following user query, provide a relevant response and generate five distinct follow-up questions that the user could ask next:
+  const prompt = `You are a helpful assistant that answers user queries. Based on the following user query, provide a relevant response and generate five distinct follow-up questions that the user could ask next:
 
 User Query: "${query}"
-only give the followup questions. not anything else. do not give numberings. just give line by line. also preserve the idea of the query. to make the thrid person know what are they talking about if they dont now the question like name of the person or thing pr what are thry refering too
+only give the followup questions. not anything else. do not give numberings. just give line by line. also preserve the idea of the query. to make the thrid person know what are they talking about if they dont now the question like name of the person or thing or what are thry refering to. If the question are general then give general follow up questions that a use can ask you.
 Response and Follow-up Questions (at least five, clearly numbered):
 1. 
 2. 
