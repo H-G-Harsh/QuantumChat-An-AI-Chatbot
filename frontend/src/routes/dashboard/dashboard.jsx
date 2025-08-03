@@ -20,7 +20,8 @@ const Dashboard = () => {
     onSuccess: (id) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["userChats"] });
-      navigate(`/dashboard/chat/${id}`);
+        console.log("Returned ID:", id); // <- Add this
+      navigate(`/dashboard/chat/${data._id}`);
     },
   })
   const handleSubmit=async (e) => {
