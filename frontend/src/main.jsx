@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
-import { dark } from '@clerk/themes'; // optional: theming
 
 import Homepage from "./routes/homepage/Homepage.jsx";
 import Dashboard from "./routes/dashboard/dashboard.jsx";
