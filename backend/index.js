@@ -85,7 +85,8 @@ app.post("/api/chats", async (req, res) => {
       });
     }
 
-    res.status(201).send(savedChat._id);
+    res.status(201).json({ _id: savedChat._id });
+
   } catch (err) {
     console.log(err);
     res.status(500).send("Error creating chat!");
