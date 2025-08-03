@@ -2,9 +2,10 @@ import express from "express";
 import ImageKit from "imagekit";
 import cors from "cors";
 import path from "path";
-import url, { fileURLToPath } from "url";
+import { fileURLToPath } from "url";
 import mongoose from "mongoose";
-import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node';
+import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
+
 import userchat from "./models/userchat.js";
 import chat from "./models/chat.js";
 import { generateChatResponse } from './utils/chatHelper.js';
@@ -14,19 +15,19 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Middlewares
 app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true,
 }));
 app.use(express.json());
-app.use(ClerkExpressWithAuth());
 
 const connect = async () => {
   try {
     await mongoose.connect(process.env.MONGO);
-    console.log("connected to mongo db");
+    console.log("✅ Connected to MongoDB");
   } catch (err) {
-    console.log(err);
+    console.error("❌ MongoDB connection error:", err);
   }
 };
 
@@ -36,6 +37,7 @@ const imagekit = new ImageKit({
   privateKey: process.env.IMAGE_KIT_PRIVATE_KEY
 });
 
+// Public route
 app.get('/', (req, res) => {
   res.send({
     activeStatus: true,
@@ -43,15 +45,15 @@ app.get('/', (req, res) => {
   });
 });
 
+// ImageKit auth
 app.get("/api/upload", (req, res) => {
   const result = imagekit.getAuthenticationParameters();
   res.send(result);
 });
 
-app.post("/api/chats", async (req, res) => {
-  const userId = req.auth?.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
+// Clerk protected routes
+app.post("/api/chats", ClerkExpressRequireAuth(), async (req, res) => {
+  const userId = req.auth.userId;
   const { text } = req.body;
 
   try {
@@ -62,85 +64,67 @@ app.post("/api/chats", async (req, res) => {
 
     const savedChat = await newChat.save();
 
-    const userChats = await userchat.find({ userId });
-    if (!userChats.length) {
-      const newUserChats = new userchat({
+    const existing = await userchat.findOne({ userId });
+    if (!existing) {
+      await new userchat({
         userId,
-        chats: [
-          {
-            _id: savedChat._id,
-            title: text.substring(0, 40),
-          },
-        ],
-      });
-      await newUserChats.save();
+        chats: [{ _id: savedChat._id, title: text.substring(0, 40) }],
+      }).save();
     } else {
       await userchat.updateOne({ userId }, {
         $push: {
-          chats: {
-            _id: savedChat._id,
-            title: text.substring(0, 40),
-          },
+          chats: { _id: savedChat._id, title: text.substring(0, 40) }
         }
       });
     }
 
-res.status(201).json(savedChat._id);
-
+    res.status(201).json(savedChat._id);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).send("Error creating chat!");
   }
 });
 
-app.get("/api/userchats", async (req, res) => {
-  const userId = req.auth?.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
+app.get("/api/userchats", ClerkExpressRequireAuth(), async (req, res) => {
+  const userId = req.auth.userId;
   try {
-    const userChats = await userchat.find({ userId });
-    res.status(200).send(userChats[0]?.chats || []);
+    const userChats = await userchat.findOne({ userId });
+    res.status(200).send(userChats?.chats || []);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).send("Error fetching chats!");
   }
 });
 
-app.get("/api/chat/:id", async (req, res) => {
-  const userId = req.auth?.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
+app.get("/api/chat/:id", ClerkExpressRequireAuth(), async (req, res) => {
+  const userId = req.auth.userId;
   try {
-    const chat1 = await chat.findOne({ _id: req.params.id, userId });
-    res.status(200).send(chat1);
+    const chatData = await chat.findOne({ _id: req.params.id, userId });
+    res.status(200).send(chatData);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).send("Error fetching chat!");
   }
 });
 
-app.put("/api/chats/:id", async (req, res) => {
-  const userId = req.auth?.userId;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
+app.put("/api/chats/:id", ClerkExpressRequireAuth(), async (req, res) => {
+  const userId = req.auth.userId;
   const { question, answer, img } = req.body;
+
   const newItems = [
     ...(question ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }] : []),
     { role: "model", parts: [{ text: answer }] },
   ];
 
   try {
-    const updatedChat = await chat.updateOne({ _id: req.params.id, userId }, {
-      $push: {
-        history: {
-          $each: newItems,
-        }
-      }
-    });
-    res.status(200).send(updatedChat);
+    const updated = await chat.updateOne(
+      { _id: req.params.id, userId },
+      { $push: { history: { $each: newItems } } }
+    );
+    res.status(200).send(updated);
   } catch (err) {
-    console.log(err);
-    res.status(500).send("Error adding conversation!");
+    console.error(err);
+    res.status(500).send("Error updating chat!");
   }
 });
 
@@ -149,31 +133,22 @@ app.post('/api/generate-response', async (req, res) => {
 
   try {
     const { primary_response, follow_up_questions } = await generateChatResponse(query);
-
-    console.log(primary_response);
-    console.log(follow_up_questions);
-
-    res.status(200).json({
-      primary_response,
-      follow_up_questions
-    });
+    res.status(200).json({ primary_response, follow_up_questions });
   } catch (err) {
-    console.error("Error generating AI response:", err);
+    console.error("AI response error:", err);
     res.status(500).send("Error generating AI response!");
   }
 });
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(401).send('Unauthenticated!');
-});
+// Static frontend for production
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"));
 });
 
+// Start server
 app.listen(port, () => {
   connect();
-  console.log("Server running on port 3000");
+  console.log(`🚀 Server running on port ${port}`);
 });
