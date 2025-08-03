@@ -11,10 +11,12 @@ const Chatlist = ({ onLinkClick }) => {
       }).then((res) => res.json()),
   });
 
+  console.log("userChats data:", data); // Debug output
+
   return (
     <div className='chatlist'>
       <span className="title">DASHBOARD</span>
-      <Link to="/dashboard" onClick={onLinkClick}>Create an new chat</Link>
+      <Link to="/dashboard" onClick={onLinkClick}>Create a new chat</Link>
       <Link to="/" onClick={onLinkClick}>Explore QuantumChat</Link>
       <Link to="/" onClick={onLinkClick}>Contact</Link>
       <hr />
@@ -22,10 +24,10 @@ const Chatlist = ({ onLinkClick }) => {
       <div className="list">
         {isPending 
           ? "loading...." 
-          : error
+          : error || !Array.isArray(data)
           ? "no chat history" 
           : data
-              ?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort by newest first
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
               .map((chat) => (
                 <Link to={`/dashboard/chat/${chat._id}`} key={chat._id} onClick={onLinkClick}>
                   {chat.title}

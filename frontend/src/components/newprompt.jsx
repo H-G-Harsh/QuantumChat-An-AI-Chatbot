@@ -20,18 +20,16 @@ const Newprompt = ({ data }) => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false); // Tracks if suggestions are loading
   const [isTyping, setIsTyping] = useState(false); // Tracks user typing
 
-  const chat = model.startChat({
-    history: [
-      {
-        role: "user",
-        parts: [{ text: "Hello" }],
-      },
-      {
-        role: "model",
-        parts: [{ text: "Great to meet you. What would you like to know?" }],
-      },
-    ],
-  });
+  // Correct Code
+const chat = model.startChat({
+  history: data?.history?.map(({ role, parts }) => ({
+    role,
+    parts: [{ text: parts[0].text }],
+  })) || [], // Use the mapped array directly or an empty array
+  generationConfig: {
+    // maxOutputTokens: 100,
+  },
+});
 
   const endRef = useRef(null);
   const formRef = useRef(null);
