@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './chat.css'; // Import your chat styles
+import './chat.css';
 import Newprompt from './../../components/newprompt';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Markdown from 'react-markdown';
 import { IKImage } from 'imagekitio-react';
 
 const Chat = () => {
-  const path = useLocation().pathname;
-  const chatId = path.split("/").pop();
+  const { id: chatId } = useParams();
   const wrapperRef = useRef(null);
 
   const { isPending, error, data } = useQuery({
@@ -19,7 +18,6 @@ const Chat = () => {
       }).then((res) => res.json()),
   });
 
-  // Scroll to bottom when data changes (chat history loads)
   useEffect(() => {
     if (data && wrapperRef.current) {
       setTimeout(() => {
@@ -28,7 +26,6 @@ const Chat = () => {
     }
   }, [data]);
 
-  // Scroll to bottom when component mounts
   useEffect(() => {
     if (wrapperRef.current) {
       setTimeout(() => {
@@ -36,11 +33,6 @@ const Chat = () => {
       }, 200);
     }
   }, []);
-
-  // if (data) {
-  //   console.log("Chat history:", data?.history); // Debugging line
-  // }
-
 
   return (
     <div className='chat'>
@@ -51,7 +43,7 @@ const Chat = () => {
             : error
               ? "something went wrong..."
               : data?.history?.map((message, i) => (
-                <>
+                <React.Fragment key={i}>
                   {message.img && (
                     <IKImage
                       urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT}
@@ -63,12 +55,11 @@ const Chat = () => {
                       lqip={{ active: true, quality: 20 }}
                     />
                   )}
-                  <div className={message.role === "user" ? "message user" : "message"} key={i}>
+                  <div className={message.role === "user" ? "message user" : "message"}>
                     <Markdown>{message.parts[0].text}</Markdown>
                   </div>
-                </>
+                </React.Fragment>
               ))}
-              
           {data && <Newprompt data={data} />}
         </div>
       </div>

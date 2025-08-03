@@ -39,6 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
+      domain="https://quantumchat-phi.vercel.app"
       navigate={(to) => router.navigate(to)} // <-- critical
     >
       <QueryClientProvider client={queryClient}>
