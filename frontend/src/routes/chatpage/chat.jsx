@@ -7,7 +7,8 @@ import Markdown from 'react-markdown';
 import { IKImage } from 'imagekitio-react';
 
 const Chat = () => {
-  const { id: chatId } = useParams();
+  const { id } = useParams();
+  const chatId = Number(id); // Convert to number
   const wrapperRef = useRef(null);
 
   const { isPending, error, data } = useQuery({
@@ -15,7 +16,10 @@ const Chat = () => {
     queryFn: () =>
       fetch(`${import.meta.env.VITE_API_URL}/api/chat/${chatId}`, {
         credentials: "include",
-      }).then((res) => res.json()),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch chat");
+        return res.json();
+      }),
   });
 
   useEffect(() => {
