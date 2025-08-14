@@ -1,6 +1,6 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import './dashboardlayout.css';
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "../../contexts/AuthContext";
 import { useEffect, useState } from "react";
 import Chatlist from './../../components/chatlist';
 
@@ -17,7 +17,7 @@ const useMediaQuery = (query) => {
 };
 
 const Dashboardlayout = () => {
-  const { userId, isLoaded } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -32,12 +32,12 @@ const Dashboardlayout = () => {
   };
 
   useEffect(() => {
-    if (isLoaded && !userId) {
+    if (!loading && !user) {
       navigate("/sign-in");
     }
-  }, [isLoaded, userId, navigate]);
+  }, [loading, user, navigate]);
 
-  if (!isLoaded) return "Loading...";
+  if (loading) return "Loading...";
 
   return (
     <div className='dashboardlayout'>

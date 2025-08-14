@@ -18,7 +18,7 @@ const userChatsSchema = new mongoose.Schema(
         },
         createdAt: {
           type: Date,
-          required: true, // ensure it's always provided when creating
+          default:Date.now()
         },
       },
     ],
@@ -26,4 +26,5 @@ const userChatsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.userchat || mongoose.model("userchat", userChatsSchema);
+export default mongoose.models.userchat ||
+  mongoose.model("userchat", userChatsSchema);

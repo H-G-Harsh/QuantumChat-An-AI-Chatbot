@@ -6,6 +6,7 @@ import model from "./../lib/gemini";
 import Markdown from "react-markdown";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Suggestions from "./../routes/chatpage/suggestions";
+import { updateChat } from '../lib/api';
 
 const Newprompt = ({ data }) => {
   const [question, setQuestion] = useState("");
@@ -20,45 +21,43 @@ const Newprompt = ({ data }) => {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false); // Tracks if suggestions are loading
   const [isTyping, setIsTyping] = useState(false); // Tracks user typing
 
-  // Correct Code
-const chat = model.startChat({
-  history: data?.history?.map(({ role, parts }) => ({
-    role,
-    parts: [{ text: parts[0].text }],
-  })) || [], // Use the mapped array directly or an empty array
-  generationConfig: {
-    // maxOutputTokens: 100,
-  },
-});
+  const chat = model.startChat({
+    history: [
+      {
+        role: "user",
+        parts: [{ text: "Hello" }],
+      },
+      {
+        role: "model",
+        parts: [{ text: "Great to meet you. What would you like to know?" }],
+      },
+    ],
+  });
 
   const endRef = useRef(null);
   const formRef = useRef(null);
 
   useEffect(() => {
-    endRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [data, question, answer, img.dbData]);
+    if (endRef.current) {
+      setTimeout(() => {
+        endRef.current.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [data, question, answer, img.dbData, suggestions]);
 
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: () => {
-      return fetch(`${import.meta.env.VITE_API_URL}/api/chats/${data._id}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: question.length ? question : undefined,
-          answer,
-          img: img.dbData?.filePath || undefined,
-        }),
-      }).then((res) => res.json());
+      return updateChat(data._id, {
+        question: question.length ? question : undefined,
+        answer,
+        img: img.dbData?.filePath || undefined,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chat", data._id] }).then(() => {
-        formRef.current.reset();
         setQuestion("");
-        setAnswer("");
+        setAnswer(""); // Clear the live answer since it's now in chat history
         setImg({
           isLoading: false,
           error: "",
@@ -66,64 +65,127 @@ const chat = model.startChat({
           aiData: {}
         });
         setIsTyping(false); // Stop typing after response
-        setLoadingSuggestions(false); // Stop loading suggestions after successful mutation
-        fetchSuggestions(question); // Fetch new suggestions
+        // Don't call fetchSuggestions here - it's already called in add function
       });
     },
     onError: (err) => {
       console.log(err);
     },
   });
-  const add = async (text, isInitial) => {
+  // Function to check if user is asking about AI identity
+  const checkIdentityQuestion = (text) => {
+    const identityKeywords = [
+      'who are you', 'what are you', 'tell me about yourself', 
+      'introduce yourself', 'your name', 'who am i talking to',
+      'what is your name', 'identify yourself'
+    ];
+    
+    const lowerText = text.toLowerCase();
+    return identityKeywords.some(keyword => lowerText.includes(keyword));
+  };
+
+  const add = async (text, isInitial, imageData = null) => {
     if (!isInitial) setQuestion(text);
+  
+    // Use provided imageData or current img state
+    const imgToUse = imageData || img;
+  
+    // Restore image data BEFORE processing if we have it
+    if (imageData && imageData.dbData?.filePath) {
+      setImg(imageData);
+    }
+
+    // Check if user is asking about identity and provide QuantumChat response
+    if (checkIdentityQuestion(text)) {
+      const quantumChatResponse = "Hello! I am QuantumChat, an AI chatbot that leverages Google's Gemini AI to cater to your queries and provide helpful, accurate responses. I'm here to assist you with a wide range of topics including answering questions, helping with analysis, creative tasks, problem-solving, and much more. What would you like to know or discuss today?";
+      
+      setAnswer(quantumChatResponse);
+      
+      setTimeout(() => {
+        mutation.mutate();
+        if (quantumChatResponse.length > 10) {
+          fetchSuggestions(quantumChatResponse);
+        }
+      }, 100);
+      
+      return;
+    }
   
     try {
       const result = await chat.sendMessageStream(
-        Object.entries(img.aiData).length ? [img.aiData, text] : [text]
+        Object.entries(imgToUse.aiData || {}).length ? [imgToUse.aiData, text] : [text]
       );
   
       let accres = ""; // Accumulated response
-      let lastChunk = ""; // Variable to hold the last chunk
+      let chunkCount = 0;
   
       // Process each chunk from the stream
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
-        accres+=chunkText;
+        accres += chunkText;
+        chunkCount++;
         setAnswer(accres);
-      }// Append the last chunk to the existing answer
-      setAnswer(accres);
-      console.log(accres); // Log the full accumulated response
-  
-      // Fetch suggestions after the message is processed
+        console.log(`Chunk ${chunkCount}:`, chunkText);
+      }
       
-      mutation.mutate();
-      fetchSuggestions(text); // Call mutation after updating the answer
+      console.log('Stream completed. Total chunks:', chunkCount);
+      console.log('Complete AI response length:', accres.length);
+      console.log('Complete AI response:', accres);
+      
+      // Ensure the final answer is set
+      setAnswer(accres);
+      
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        // Wait for mutation to complete before fetching suggestions
+        mutation.mutate();
+        
+        // Fetch suggestions using the complete AI response, not the original text
+        if (accres && accres.length > 10) {
+          fetchSuggestions(accres);
+        }
+      }, 100);
+      
     } catch (err) {
       console.error("Error in add function:", err);
+      console.error("Error details:", err.message, err.stack);
     }
   };
   const fetchSuggestions = async (text) => {
     try {
-      setLoadingSuggestions(true); 
+      setLoadingSuggestions(true);
+      console.log('Fetching suggestions for AI response:', text.substring(0, 100) + '...');
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-response`, {
         method: "POST",
-        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ query: text }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      if (data.follow_up_questions) {
-        // Add a delay of 3 seconds before updating the state
+      console.log('Suggestions API response:', data);
+      
+      if (data.follow_up_questions && Array.isArray(data.follow_up_questions) && data.follow_up_questions.length > 0) {
+        // Add a delay of 2 seconds before updating the state
         setTimeout(() => {
           setSuggestions(data.follow_up_questions);
-          setLoadingSuggestions(false); // Stop loading state after delay
-        }, 3000);
+          setLoadingSuggestions(false);
+        }, 2000);
+      } else {
+        console.warn('No valid follow_up_questions in response, not showing suggestions');
+        setLoadingSuggestions(false);
+        // Don't show fallback suggestions - just don't show any
       }
     } catch (err) {
       console.error("Error in fetchSuggestions:", err);
-      setLoadingSuggestions(false); // Stop loading state on error
+      setLoadingSuggestions(false);
+      // Don't show fallback suggestions on error - just don't show any
     }
   };
   
@@ -136,12 +198,29 @@ const chat = model.startChat({
     e.preventDefault();
     const text = e.target.text.value;
     if (!text) return;
+    
+    // Store current image data before clearing UI
+    const currentImgData = { ...img };
+    
+    // Clear form text immediately for better UX
+    formRef.current.reset();
+    
+    // Clear previous answer when starting new conversation
+    setAnswer("");
+    
+    // Clear only the preview (dbData) but keep the actual data
+    setImg(prev => ({
+      ...prev,
+      dbData: {}, // Clear preview
+      // Keep aiData for AI processing
+    }));
+    
     setIsTyping(false); // Stop typing on submit
     setLoadingSuggestions(false); // Hide suggestions immediately when submitting
     setSuggestions([]); // Clear suggestions immediately
-    add(text);
-    //formRef.current.reset();
     
+    // Pass the stored image data to add function
+    add(text, false, currentImgData);
   };
 
   const handleInputChange = (e) => {
@@ -153,42 +232,19 @@ const chat = model.startChat({
   const handleSuggestionClick = (suggestion) => {
     setSuggestions([]); // Clear suggestions
     setLoadingSuggestions(false); // Hide loading state if applicable
-    add(suggestion); // Add the selected suggestion
+    add(suggestion, false); // Add the selected suggestion
   };
 
-  const hasRun = useRef(false);
+  const processedChatId = useRef(null);
   useEffect(() => {
-    if (!hasRun.current && data?.history?.length === 1) {
+    if (data?.history?.length === 1 && processedChatId.current !== data._id) {
+      processedChatId.current = data._id;
       add(data.history[0].parts[0].text, true);
     }
-    hasRun.current = true;
-  }, []);
+  }, [data]);
 
   return (
     <>
-      {img.isLoading ? (
-  <div>Loading...</div>
-) : (
-  <>
-    {img.dbData?.filePath && (
-      <IKImage
-        urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT}
-        path={img.dbData?.filePath}
-        width="400"
-        height="400"
-        transformation={[{ width: 400, height: 400 }]}
-        onError={() => setImg({ ...img, error: "Image failed to load" })} // Handle image load error
-      />
-    )}
-    {/* Display the file name if the image fails to load */}
-    {img.dbData?.filePath && img.error && (
-      <div className="file-name">
-        {img.dbData.filePath.split("/").pop()}
-      </div>
-    )}
-  </>
-)}
-
       {question && <div className="message user">{question}</div>}
       {answer && <div className="message"><Markdown>{answer}</Markdown></div>}
 
@@ -201,25 +257,59 @@ const chat = model.startChat({
 
       <div className="end" ref={endRef}></div>
 
-      <form className="newform" onSubmit={handlesubmit} ref={formRef}>
-        <Upload setImg={setImg} />
-        <input
-          id="file"
-          type="file"
-          accept="image/*"
-          multiple={false}
-          hidden
-        />
-        <input
-          type="text"
-          name="text"
-          placeholder="Ask anything...."
-          onChange={handleInputChange} // Detect typing
-        />
-        <button id="arr">
-          <img src="/arrow.png" alt="" />
-        </button>
-      </form>
+      <div className="form-container">
+        {/* Image preview above the form */}
+        {img.isLoading && (
+          <div className="image-preview-container">
+            <div className="image-loading">
+              <div className="loading-spinner"></div>
+              <span>Uploading image...</span>
+            </div>
+          </div>
+        )}
+        
+        {img.dbData?.filePath && (
+          <div className="image-preview-container">
+            <div className="image-preview">
+              <IKImage
+                urlEndpoint={import.meta.env.VITE_IMAGE_KIT_ENDPOINT}
+                path={img.dbData?.filePath}
+                width="120"
+                height="120"
+                transformation={[{ width: 120, height: 120 }]}
+                className="preview-image"
+              />
+              <button 
+                onClick={() => setImg({ isLoading: false, error: "", dbData: {}, aiData: {} })}
+                className="remove-image-btn"
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+        <form className="newform" onSubmit={handlesubmit} ref={formRef}>
+          <Upload setImg={setImg} />
+          <input
+            id="file"
+            type="file"
+            accept="image/*"
+            multiple={false}
+            hidden
+          />
+          <input
+            type="text"
+            name="text"
+            placeholder="Ask anything...."
+            onChange={handleInputChange} // Detect typing
+          />
+          <button id="arr">
+            <img src="/arrow.png" alt="" />
+          </button>
+        </form>
+      </div>
     </>
   );
 };

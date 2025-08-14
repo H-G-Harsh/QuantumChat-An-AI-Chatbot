@@ -39,6 +39,28 @@
                     max-width: 80%;
                     align-self: flex-end;
                 }
+
+                .message-content {
+                    margin-top: 8px;
+                }
+
+                .message-image {
+                    margin-bottom: 12px;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .chat-image {
+                    border-radius: 12px;
+                    object-fit: cover;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    transition: transform 0.2s ease;
+                }
+
+                .chat-image:hover {
+                    transform: scale(1.02);
+                    cursor: pointer;
+                }
             }
 
             @media screen and (max-width: 1024px) {
@@ -60,6 +82,15 @@
                         max-width: 90%;
                         border-radius: 15px;
                     }
+
+                    .message-image {
+                        margin-bottom: 8px;
+                    }
+
+                    .chat-image {
+                        width: 150px !important;
+                        height: 150px !important;
+                    }
                 }
             }
 
@@ -70,6 +101,15 @@
                     font-size: 14px;
                     &.user {
                         max-width: 95%;
+                    }
+
+                    .message-image {
+                        margin-bottom: 6px;
+                    }
+
+                    .chat-image {
+                        width: 120px !important;
+                        height: 120px !important;
                     }
                 }
                 p, li {

@@ -1,22 +1,163 @@
 .end{
-    padding-bottom: 100px;
+    padding-bottom: 200px;
 }
+
 .suggestions-block{
     position: relative;
     display: flex;
-    
+    margin-bottom: 20px;
 }
-    .newform{
+
+/* Form container to hold image preview and form */
+.form-container {
     width: 80%;
     position: absolute;
-    bottom: 0;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+}
+
+/* Desktop adjustments */
+@media screen and (min-width: 769px) {
+    .end {
+        padding-bottom: 180px;
+    }
+    
+    .form-container {
+        width: 80%;
+        position: absolute;
+        bottom: 0;
+    }
+}
+
+/* Mobile responsive adjustments */
+@media screen and (max-width: 768px) {
+    .end {
+        padding-bottom: 200px;
+    }
+    
+    .form-container {
+        width: 95%;
+        bottom: 10px;
+        position: fixed;
+        z-index: 1000;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .suggestions-block {
+        margin-bottom: 40px;
+        padding-bottom: 30px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .newform {
+        padding: 0px 15px;
+        
+        input {
+            padding: 15px;
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .end {
+        padding-bottom: 220px;
+    }
+    
+    .form-container {
+        width: 98%;
+        bottom: 5px;
+    }
+    
+    .suggestions-block {
+        margin-bottom: 50px;
+        padding-bottom: 40px;
+    }
+}
+
+/* Image preview styles - Above input area */
+.image-preview-container {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #2c2937;
+  border-radius: 8px;
+  border: 1px solid #3a3a4a;
+  display: flex;
+  justify-content: center;
+}
+
+.image-preview {
+  position: relative;
+  display: inline-block;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.preview-image {
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(220, 53, 69, 0.8);
+}
+
+.image-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: #888;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #333;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.newform{
+    width: 100%;
     background-color: #2c2937;
     border-radius: 20px;
     display: flex;
     align-items: center;
     gap: 20px;
     padding: 0px 20px;
-    
 
     input{
         flex: 1;
@@ -44,5 +185,5 @@
             height: 16px;
         }
     }
-    }
+}
     
