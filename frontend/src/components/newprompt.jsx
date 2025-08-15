@@ -40,12 +40,13 @@ const Newprompt = ({ data }) => {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
-    if (endRef.current) {
+    // Only auto-scroll when answer changes, not when suggestions appear or when typing
+    if (endRef.current && !isTyping && answer) {
       setTimeout(() => {
         endRef.current.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
-  }, [data, question, answer, img.dbData, suggestions]);
+  }, [data, answer, img.dbData, isTyping]);
 
   // Mobile keyboard detection and handling
   useEffect(() => {

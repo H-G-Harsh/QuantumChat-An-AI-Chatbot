@@ -2,10 +2,15 @@ import './dashboard.css'
 import { useMutation,useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createChat } from '../../lib/api';
+import { useRef, useEffect, useState } from 'react';
 
 const Dashboard = () => {
   const queryClient = useQueryClient()
   const navigate =useNavigate()
+  const inputRef = useRef(null);
+  const formRef = useRef(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  
   const mutation = useMutation({
     mutationFn: createChat,
     onSuccess: (id) => {
@@ -14,10 +19,60 @@ const Dashboard = () => {
       navigate(`/dashboard/chat/${id}`);
     },
   })
+
+  // Mobile keyboard detection and handling
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerHeight < window.screen.height * 0.75) {
+        setIsKeyboardOpen(true);
+      } else {
+        setIsKeyboardOpen(false);
+      }
+    };
+
+    const handleFocus = () => {
+      setTimeout(() => {
+        setIsKeyboardOpen(true);
+        // Scroll to keep form visible on mobile
+        if (window.innerWidth <= 768 && inputRef.current) {
+          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    };
+
+    const handleBlur = () => {
+      setTimeout(() => {
+        setIsKeyboardOpen(false);
+      }, 100);
+    };
+
+    // Add event listeners
+    window.addEventListener('resize', handleResize);
+    if (inputRef.current) {
+      inputRef.current.addEventListener('focus', handleFocus);
+      inputRef.current.addEventListener('blur', handleBlur);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (inputRef.current) {
+        inputRef.current.removeEventListener('focus', handleFocus);
+        inputRef.current.removeEventListener('blur', handleBlur);
+      }
+    };
+  }, []);
+
   const handleSubmit=async (e) => {
     e.preventDefault();
     const text=e.target.text.value;
     if(!text) return;
+    
+    // Blur input to close keyboard on mobile
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+    
+    setIsKeyboardOpen(false); // Close keyboard state
     mutation.mutate(text);
   }
 
@@ -72,10 +127,19 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        <div className="formcontainer">
-            <form onSubmit={handleSubmit}>
-              <input type="text" name="text" placeholder="Ask me anything....." />
-              <button>
+        <div className={`formcontainer ${isKeyboardOpen ? 'keyboard-open' : ''}`}>
+            <form onSubmit={handleSubmit} ref={formRef}>
+              <input 
+                ref={inputRef}
+                type="text" 
+                name="text" 
+                placeholder="Ask me anything....." 
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+              />
+              <button type="submit">
                 <img src="/arrow.png" alt="" /></button>
             </form>
         </div>
