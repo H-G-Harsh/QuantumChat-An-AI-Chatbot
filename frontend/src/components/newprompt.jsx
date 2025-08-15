@@ -361,8 +361,8 @@ const Newprompt = ({ data }) => {
             autoCapitalize="off"
             spellCheck="false"
           />
-          <button id="arr" type="submit">
-            <img src="/arrow.png" alt="" />
+          <button id="arr" type="submit" title="Send message">
+            <img src="/arrow.png" alt="Send" />
           </button>
         </form>
       </div>

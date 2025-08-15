@@ -150,6 +150,24 @@
                 height: 14px;
             }
         }
+        
+        /* Ensure submit button is visible on mobile */
+        #arr, button[type="submit"] {
+            background-color: #fff !important;
+            min-width: 36px;
+            min-height: 36px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            
+            img {
+                filter: brightness(0); /* Black arrow on white background */
+                width: 14px !important;
+                height: 14px !important;
+            }
+            
+            &:hover {
+                background-color: #f0f0f0 !important;
+            }
+        }
     }
 }
 
@@ -241,9 +259,6 @@
         background-color: transparent;
         color: #ececec;
     }
-    #arr{
-        background-color: #fff;
-    }
     button,label{
         border-radius: 50%;
         background-color: #605e68;
@@ -267,6 +282,30 @@
         img{
             width: 16px;
             height: 16px;
+        }
+    }
+    
+    /* Submit button specific styling */
+    #arr, button[type="submit"]{
+        background-color: #fff !important;
+        min-width: 40px;
+        min-height: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        
+        &:hover {
+            background-color: #f0f0f0 !important;
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        &:active {
+            transform: scale(0.95);
+        }
+        
+        img {
+            filter: brightness(0); /* Make arrow black on white background */
+            width: 16px !important;
+            height: 16px !important;
         }
     }
 }
