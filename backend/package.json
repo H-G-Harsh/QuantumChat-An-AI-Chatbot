@@ -24,6 +24,10 @@
     "mongodb": "^6.10.0",
     "mongoose": "^8.8.2",
     "nodemon": "^3.1.7",
-    "openai": "^4.76.1"
+    "openai": "^4.76.1",
+    "gopd": "^1.0.1",
+    "get-intrinsic": "^1.2.4",
+    "side-channel": "^1.0.6",
+    "qs": "^6.12.3"
   }
 }
