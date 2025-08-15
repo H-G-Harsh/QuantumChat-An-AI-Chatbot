@@ -40,6 +40,7 @@ const requireAuth = async (req, res, next) => {
 
 app.use(cors({
     origin: [
+        'https://quantumchat-phi.vercel.app',
         process.env.CLIENT_URL,
         'http://localhost:5173',
         'http://localhost:5174'
@@ -68,6 +69,41 @@ app.get('/', (req, res) => {
     activeStatus: true,
     error: false,
   });
+});
+
+// Health check endpoint (no auth required)
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    message: 'Backend is running',
+    mongoStatus: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+  });
+});
+
+// Database connection test endpoint
+app.get('/api/db-test', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    const states = {
+      0: 'Disconnected',
+      1: 'Connected',
+      2: 'Connecting',
+      3: 'Disconnecting'
+    };
+    
+    res.json({
+      status: 'OK',
+      mongoState: states[dbState],
+      mongoReady: dbState === 1,
+      connectionString: process.env.MONGO ? 'Present' : 'Missing'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'Error',
+      error: error.message
+    });
+  }
 });
 
 // Test auth endpoint
