@@ -59,6 +59,35 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 // Configure Mongoose for serverless
 mongoose.set("bufferCommands", false);
 
+const ensureConnection = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return; // Already connected
+  }
+
+  if (mongoose.connection.readyState === 2) {
+    // Currently connecting, wait for it
+    return new Promise((resolve, reject) => {
+      mongoose.connection.once("connected", resolve);
+      mongoose.connection.once("error", reject);
+    });
+  }
+
+  // Not connected, establish connection
+  try {
+    console.log("🔄 Establishing MongoDB connection...");
+    await mongoose.connect(process.env.MONGO, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      family: 4,
+    });
+    console.log("✅ Connected to MongoDB successfully");
+  } catch (err) {
+    console.log("❌ MongoDB connection error:", err.message);
+    throw err;
+  }
+};
+
 const connect = async () => {
   try {
     console.log("🔄 Attempting MongoDB connection...");
@@ -68,13 +97,7 @@ const connect = async () => {
       throw new Error("MONGO environment variable is not set");
     }
 
-    await mongoose.connect(process.env.MONGO, {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      family: 4,
-    });
-    console.log("✅ Connected to MongoDB successfully");
+    await ensureConnection();
   } catch (err) {
     console.log("❌ MongoDB connection error:", err.message);
     console.log("🔍 Full error:", err);
@@ -187,7 +210,9 @@ app.get("/api/upload", (req, res) => {
 app.post("/api/chats", requireAuth, async (req, res) => {
   const userId = req.user.userId;
   const { text } = req.body;
+
   try {
+    await ensureConnection();
     // Create a new chat entry
     const newChat = new chat({
       userId: userId,
@@ -233,6 +258,7 @@ app.post("/api/chats", requireAuth, async (req, res) => {
 app.get("/api/userchats", requireAuth, async (req, res) => {
   const userId = req.user.userId;
   try {
+    await ensureConnection();
     const userChats = await userchat.find({ userId });
     res.status(200).send(userChats.length > 0 ? userChats[0].chats : []);
   } catch (err) {
@@ -245,9 +271,9 @@ app.get("/api/chat/:id", requireAuth, async (req, res) => {
   const userId = req.user.userId;
   const chatId = req.params.id;
 
-  console.log(`Fetching chat: ${chatId} for user: ${userId}`);
-
   try {
+    await ensureConnection();
+    console.log(`Fetching chat: ${chatId} for user: ${userId}`);
     const chat1 = await chat.findOne({ _id: chatId, userId });
     if (!chat1) {
       console.log(`Chat not found: ${chatId}`);
@@ -266,13 +292,16 @@ app.get("/api/chat/:id", requireAuth, async (req, res) => {
 app.put("/api/chats/:id", requireAuth, async (req, res) => {
   const userId = req.user.userId;
   const { question, answer, img } = req.body;
-  const newItems = [
-    ...(question
-      ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }]
-      : []),
-    { role: "model", parts: [{ text: answer }] },
-  ];
+
   try {
+    await ensureConnection();
+
+    const newItems = [
+      ...(question
+        ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }]
+        : []),
+      { role: "model", parts: [{ text: answer }] },
+    ];
     const updatedChat = await chat.updateOne(
       { _id: req.params.id, userId },
       {
