@@ -58,7 +58,6 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Configure Mongoose for serverless
 mongoose.set("bufferCommands", false);
-mongoose.set("bufferMaxEntries", 0);
 
 const connect = async () => {
   try {
