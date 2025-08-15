@@ -119,11 +119,48 @@ app.get("/api/db-test", async (req, res) => {
       mongoState: states[dbState],
       mongoReady: dbState === 1,
       connectionString: process.env.MONGO ? "Present" : "Missing",
+      connectionStringLength: process.env.MONGO ? process.env.MONGO.length : 0,
     });
   } catch (error) {
     res.status(500).json({
       status: "Error",
       error: error.message,
+    });
+  }
+});
+
+// Force connection test endpoint
+app.get("/api/force-connect", async (req, res) => {
+  try {
+    console.log("🔄 Force connecting to MongoDB...");
+
+    // Close existing connection if any
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+
+    // Attempt new connection
+    await mongoose.connect(process.env.MONGO, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+      maxPoolSize: 10,
+      family: 4,
+    });
+
+    console.log("✅ Force connection successful");
+    res.json({
+      status: "Success",
+      message: "MongoDB connection established",
+      mongoState: "Connected",
+    });
+  } catch (error) {
+    console.log("❌ Force connection failed:", error.message);
+    res.status(500).json({
+      status: "Error",
+      error: error.message,
+      details: error.toString(),
     });
   }
 });
