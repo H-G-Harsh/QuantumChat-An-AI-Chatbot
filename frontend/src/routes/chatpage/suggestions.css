@@ -1,0 +1,18 @@
+.suggestions {
+    
+    padding: 10px;
+    border-top: 1px solid #ccc;
+  }
+  
+  .suggestion-button {
+    
+    color: #ccc;
+    font-weight: 400;
+    border-radius: 20px;
+    margin: 5px 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    
+    cursor: pointer;
+    background-color:  #2c2937;
+  }

@@ -1,0 +1,38 @@
+.rootlayout{
+    padding: 16px 10px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    header{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        .logo{
+            display: flex;
+            align-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            gap: 9px;
+            img{
+                width: 32px;
+                height: 32px;
+            }
+            @media screen and (max-width: 768px) {
+                font-size: 16px;
+                gap: 6px;
+                img{
+                    width: 24px;
+                    height: 24px;
+                }
+            }
+        }
+
+    }
+    main{
+        flex:1;
+        overflow: hidden;
+    }
+    @media screen and (max-width: 768px) {
+        padding: 12px 8px;
+    }
+}

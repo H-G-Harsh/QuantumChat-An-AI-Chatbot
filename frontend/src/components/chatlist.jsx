@@ -1,0 +1,41 @@
+import './chatlist.css';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getUserChats } from '../lib/api';
+
+const Chatlist = ({ onLinkClick }) => {
+  const { isPending, error, data } = useQuery({
+    queryKey: ['userChats'],
+    queryFn: getUserChats,
+  });
+
+  return (
+    <div className='chatlist'>
+      <span className="title">DASHBOARD</span>
+      <Link to="/dashboard" onClick={onLinkClick}>Create an new chat</Link>
+      <Link to="/" onClick={onLinkClick}>Explore QuantumChat</Link>
+      <hr />
+      <span className="title">RECENT CHATS</span>
+      <div className="list">
+        {isPending 
+          ? "loading...." 
+          : error
+          ? "no chat history" 
+          : data
+              ?.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // Sort by newest first
+              .map((chat) => (
+                <Link to={`/dashboard/chat/${chat._id}`} key={chat._id} onClick={onLinkClick}>
+                  {chat.title}
+                </Link>
+              ))}
+      </div>
+      <hr />
+      <div className="foot">
+        <span>AI may make mistakes. 
+          Please verify important information independently.</span>
+      </div>
+    </div>
+  );
+};
+
+export default Chatlist;
