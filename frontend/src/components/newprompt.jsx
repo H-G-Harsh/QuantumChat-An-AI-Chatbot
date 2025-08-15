@@ -36,6 +36,8 @@ const Newprompt = ({ data }) => {
 
   const endRef = useRef(null);
   const formRef = useRef(null);
+  const inputRef = useRef(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
     if (endRef.current) {
@@ -44,6 +46,48 @@ const Newprompt = ({ data }) => {
       }, 100);
     }
   }, [data, question, answer, img.dbData, suggestions]);
+
+  // Mobile keyboard detection and handling
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerHeight < window.screen.height * 0.75) {
+        setIsKeyboardOpen(true);
+      } else {
+        setIsKeyboardOpen(false);
+      }
+    };
+
+    const handleFocus = () => {
+      setTimeout(() => {
+        setIsKeyboardOpen(true);
+        // Scroll to keep form visible on mobile
+        if (window.innerWidth <= 768 && inputRef.current) {
+          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    };
+
+    const handleBlur = () => {
+      setTimeout(() => {
+        setIsKeyboardOpen(false);
+      }, 100);
+    };
+
+    // Add event listeners
+    window.addEventListener('resize', handleResize);
+    if (inputRef.current) {
+      inputRef.current.addEventListener('focus', handleFocus);
+      inputRef.current.addEventListener('blur', handleBlur);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (inputRef.current) {
+        inputRef.current.removeEventListener('focus', handleFocus);
+        inputRef.current.removeEventListener('blur', handleBlur);
+      }
+    };
+  }, []);
 
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -202,6 +246,11 @@ const Newprompt = ({ data }) => {
     // Store current image data before clearing UI
     const currentImgData = { ...img };
     
+    // Blur input to close keyboard on mobile
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+    
     // Clear form text immediately for better UX
     formRef.current.reset();
     
@@ -216,6 +265,7 @@ const Newprompt = ({ data }) => {
     }));
     
     setIsTyping(false); // Stop typing on submit
+    setIsKeyboardOpen(false); // Close keyboard state
     setLoadingSuggestions(false); // Hide suggestions immediately when submitting
     setSuggestions([]); // Clear suggestions immediately
     
@@ -257,7 +307,7 @@ const Newprompt = ({ data }) => {
 
       <div className="end" ref={endRef}></div>
 
-      <div className="form-container">
+      <div className={`form-container ${isKeyboardOpen ? 'keyboard-open' : ''}`}>
         {/* Image preview above the form */}
         {img.isLoading && (
           <div className="image-preview-container">
@@ -300,12 +350,17 @@ const Newprompt = ({ data }) => {
             hidden
           />
           <input
+            ref={inputRef}
             type="text"
             name="text"
             placeholder="Ask anything...."
             onChange={handleInputChange} // Detect typing
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
           />
-          <button id="arr">
+          <button id="arr" type="submit">
             <img src="/arrow.png" alt="" />
           </button>
         </form>

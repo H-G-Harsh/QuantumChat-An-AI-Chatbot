@@ -11,39 +11,62 @@
 /* Form container to hold image preview and form */
 .form-container {
     width: 80%;
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 100;
+    z-index: 1000;
+    background: rgba(18, 18, 18, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Mobile keyboard handling */
+@supports (-webkit-touch-callout: none) {
+    .form-container {
+        /* iOS specific adjustments */
+        bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    
+    .form-container.keyboard-open {
+        bottom: 10px;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
 /* Desktop adjustments */
 @media screen and (min-width: 769px) {
     .end {
-        padding-bottom: 180px;
+        padding-bottom: 200px;
     }
     
     .form-container {
-        width: 80%;
-        position: absolute;
-        bottom: 0;
+        width: 70%;
+        max-width: 800px;
+        bottom: 30px;
     }
 }
 
 /* Mobile responsive adjustments */
 @media screen and (max-width: 768px) {
     .end {
-        padding-bottom: 200px;
+        padding-bottom: 220px;
     }
     
     .form-container {
         width: 95%;
+        bottom: max(15px, env(safe-area-inset-bottom));
+        padding: 12px;
+        transition: bottom 0.3s ease, transform 0.3s ease;
+    }
+    
+    .form-container.keyboard-open {
         bottom: 10px;
         position: fixed;
-        z-index: 1000;
-        left: 50%;
-        transform: translateX(-50%);
+        z-index: 1001;
     }
     
     .suggestions-block {
@@ -54,28 +77,68 @@
     }
     
     .newform {
-        padding: 0px 15px;
+        padding: 0px 12px;
         
         input {
             padding: 15px;
             font-size: 16px; /* Prevents zoom on iOS */
+            -webkit-appearance: none;
+            -webkit-border-radius: 0;
+            border-radius: 20px;
+        }
+        
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(108, 117, 234, 0.3);
         }
     }
 }
 
 @media screen and (max-width: 480px) {
     .end {
-        padding-bottom: 220px;
+        padding-bottom: 240px;
     }
     
     .form-container {
         width: 98%;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        padding: 10px;
+    }
+    
+    .form-container.keyboard-open {
         bottom: 5px;
+        width: 99%;
+        padding: 8px;
     }
     
     .suggestions-block {
         margin-bottom: 50px;
         padding-bottom: 40px;
+    }
+    
+    .newform {
+        padding: 0px 10px;
+        
+        input {
+            padding: 12px;
+            font-size: 16px;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        
+        input:focus {
+            transform: none;
+            -webkit-transform: none;
+        }
+        
+        button, label {
+            padding: 8px;
+            
+            img {
+                width: 14px;
+                height: 14px;
+            }
+        }
     }
 }
 
@@ -179,10 +242,59 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background-color: #6c75ea;
+            transform: scale(1.05);
+        }
+        
+        &:active {
+            transform: scale(0.95);
+        }
         
         img{
             width: 16px;
             height: 16px;
+        }
+    }
+}
+
+/* Additional mobile keyboard optimizations */
+@media screen and (max-width: 768px) {
+    /* Prevent viewport zoom on input focus */
+    input[type="text"] {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100%;
+        -webkit-appearance: none;
+    }
+    
+    /* Smooth keyboard transitions */
+    .form-container {
+        will-change: transform, bottom;
+    }
+    
+    /* Ensure form stays visible during keyboard animation */
+    @supports (env(keyboard-inset-height)) {
+        .form-container.keyboard-open {
+            bottom: calc(env(keyboard-inset-height) + 10px);
+        }
+    }
+}
+
+/* iOS specific optimizations */
+@supports (-webkit-touch-callout: none) {
+    @media screen and (max-width: 768px) {
+        .form-container.keyboard-open {
+            position: fixed;
+            bottom: 10px;
+            z-index: 1001;
+        }
+        
+        input[type="text"] {
+            -webkit-appearance: none;
+            -webkit-border-radius: 0;
+            border-radius: 20px;
         }
     }
 }

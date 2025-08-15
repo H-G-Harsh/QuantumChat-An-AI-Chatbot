@@ -14,6 +14,7 @@
         flex-direction: column;
         align-items: center;
         max-height: calc(100vh - 80px);
+        padding-bottom: 200px; /* Space for fixed form */
 
         .chats {
             width: 80%;
