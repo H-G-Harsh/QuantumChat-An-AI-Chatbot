@@ -24,14 +24,48 @@
     transition: all 0.3s ease;
 }
 
-/* Lower z-index when sidebar is open on mobile */
+/* Desktop adjustments - avoid sidebar overlap */
+@media screen and (min-width: 1025px) {
+    .form-container {
+        width: 55%;
+        max-width: 700px;
+        /* Calculate: sidebar width + gap + half of remaining space */
+        left: calc(250px + 50px + (100vw - 250px - 50px) / 2);
+        transform: translateX(-50%);
+    }
+}
+
+@media screen and (min-width: 1200px) {
+    .form-container {
+        width: 50%;
+        max-width: 600px;
+        /* Adjust for larger screens */
+        left: calc(280px + 50px + (100vw - 280px - 50px) / 2);
+    }
+}
+
+@media screen and (min-width: 1400px) {
+    .form-container {
+        width: 45%;
+        max-width: 550px;
+        left: calc(300px + 50px + (100vw - 300px - 50px) / 2);
+    }
+}
+
+/* Z-index management for different screen sizes */
 @media screen and (max-width: 768px) {
     .form-container {
-        z-index: 999; /* Lower than sidebar */
+        z-index: 999; /* Lower than sidebar on mobile */
     }
     
     .form-container.keyboard-open {
         z-index: 1001; /* Higher when keyboard is open */
+    }
+}
+
+@media screen and (min-width: 1025px) {
+    .form-container {
+        z-index: 100; /* Much lower on desktop to avoid sidebar interference */
     }
 }
 
@@ -48,8 +82,8 @@
     }
 }
 
-/* Desktop adjustments */
-@media screen and (min-width: 769px) {
+/* Tablet adjustments */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
     .end {
         padding-bottom: 200px;
     }
@@ -58,6 +92,8 @@
         width: 70%;
         max-width: 800px;
         bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
     }
 }
 
