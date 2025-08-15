@@ -18,7 +18,7 @@
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.1",
+    "express": "4.19.2",
     "gopd": "1.0.1",
     "imagekit": "^5.2.0",
     "imagekitio-react": "^4.2.0",
@@ -28,6 +28,8 @@
     "openai": "^4.76.1"
   },
   "overrides": {
-    "gopd": "1.0.1"
+    "gopd": "1.0.1",
+    "get-intrinsic": "1.2.4",
+    "qs": "6.11.0"
   }
 }
