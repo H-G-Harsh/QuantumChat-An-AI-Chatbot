@@ -241,7 +241,7 @@ const Newprompt = ({ data }) => {
 
   const handlesubmit = async (e) => {
     e.preventDefault();
-    const text = e.target.text.value;
+    const text = e.target.text.value.trim();
     if (!text) return;
     
     // Store current image data before clearing UI
@@ -254,6 +254,11 @@ const Newprompt = ({ data }) => {
     
     // Clear form text immediately for better UX
     formRef.current.reset();
+    
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
     
     // Clear previous answer when starting new conversation
     setAnswer("");
@@ -350,9 +355,8 @@ const Newprompt = ({ data }) => {
             multiple={false}
             hidden
           />
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
             name="text"
             placeholder="Ask anything...."
             onChange={handleInputChange} // Detect typing
@@ -360,6 +364,18 @@ const Newprompt = ({ data }) => {
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
+            rows="1"
+            onInput={(e) => {
+              // Auto-resize textarea
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handlesubmit(e);
+              }
+            }}
           />
           <button id="arr" type="submit" title="Send message">
             <img src="/arrow.png" alt="Send" />

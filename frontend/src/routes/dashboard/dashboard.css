@@ -232,7 +232,7 @@
     margin-bottom: 10px;
 }
 
-.formcontainer form input {
+.formcontainer form input, .formcontainer form textarea {
     flex: 1;
     padding: 10px;
     background-color: transparent;
@@ -240,14 +240,40 @@
     outline: none;
     color: #ececec;
     font-size: 16px; /* Prevents zoom on iOS */
+    font-family: inherit;
+    line-height: 1.4;
+    resize: none;
+    min-height: 20px;
+    max-height: 120px;
+    overflow-y: auto;
+    transition: height 0.2s ease;
     -webkit-appearance: none;
     -webkit-border-radius: 0;
     border-radius: 20px;
 }
 
-.formcontainer form input:focus {
+.formcontainer form input:focus, .formcontainer form textarea:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(108, 117, 234, 0.3);
+}
+
+/* Custom scrollbar for dashboard textarea */
+.formcontainer form textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+.formcontainer form textarea::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.formcontainer form textarea::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.formcontainer form textarea::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .formcontainer form button {
@@ -270,7 +296,7 @@
 /* Mobile keyboard optimizations for dashboard */
 @media screen and (max-width: 768px) {
     /* Prevent viewport zoom on input focus */
-    .formcontainer form input {
+    .formcontainer form input, .formcontainer form textarea {
         font-size: 16px !important;
         -webkit-text-size-adjust: 100%;
         -webkit-appearance: none;
@@ -298,7 +324,7 @@
             z-index: 1001;
         }
         
-        .formcontainer form input {
+        .formcontainer form input, .formcontainer form textarea {
             -webkit-appearance: none;
             -webkit-border-radius: 0;
             border-radius: 20px;

@@ -64,7 +64,7 @@ const Dashboard = () => {
 
   const handleSubmit=async (e) => {
     e.preventDefault();
-    const text=e.target.text.value;
+    const text=e.target.text.value.trim();
     if(!text) return;
     
     // Blur input to close keyboard on mobile
@@ -73,6 +73,12 @@ const Dashboard = () => {
     }
     
     setIsKeyboardOpen(false); // Close keyboard state
+    
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+    
     mutation.mutate(text);
   }
 
@@ -129,15 +135,26 @@ const Dashboard = () => {
         </div>
         <div className={`formcontainer ${isKeyboardOpen ? 'keyboard-open' : ''}`}>
             <form onSubmit={handleSubmit} ref={formRef}>
-              <input 
+              <textarea 
                 ref={inputRef}
-                type="text" 
                 name="text" 
                 placeholder="Ask me anything....." 
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
+                rows="1"
+                onInput={(e) => {
+                  // Auto-resize textarea
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
               <button type="submit">
                 <img src="/arrow.png" alt="" /></button>

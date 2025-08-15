@@ -126,7 +126,7 @@
     .newform {
         padding: 0px 12px;
         
-        input {
+        input, textarea {
             padding: 15px;
             font-size: 16px; /* Prevents zoom on iOS */
             -webkit-appearance: none;
@@ -166,7 +166,7 @@
     .newform {
         padding: 0px 10px;
         
-        input {
+        input, textarea {
             padding: 12px;
             font-size: 16px;
             -webkit-user-select: text;
@@ -287,13 +287,40 @@
     gap: 20px;
     padding: 0px 20px;
 
-    input{
+    input, textarea{
         flex: 1;
         padding: 20px;
         border: none;
         outline: none;
         background-color: transparent;
         color: #ececec;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: 1.4;
+        resize: none;
+        min-height: 20px;
+        max-height: 120px;
+        overflow-y: auto;
+        transition: height 0.2s ease;
+    }
+    
+    /* Custom scrollbar for textarea */
+    textarea::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    textarea::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+    
+    textarea::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+    }
+    
+    textarea::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
     }
     button,label{
         border-radius: 50%;
@@ -349,7 +376,7 @@
 /* Additional mobile keyboard optimizations */
 @media screen and (max-width: 768px) {
     /* Prevent viewport zoom on input focus */
-    input[type="text"] {
+    input[type="text"], textarea {
         font-size: 16px !important;
         -webkit-text-size-adjust: 100%;
         -webkit-appearance: none;
@@ -377,7 +404,7 @@
             z-index: 1001;
         }
         
-        input[type="text"] {
+        input[type="text"], textarea {
             -webkit-appearance: none;
             -webkit-border-radius: 0;
             border-radius: 20px;
