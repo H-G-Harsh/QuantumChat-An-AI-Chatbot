@@ -56,6 +56,10 @@ app.use(
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+// Configure Mongoose for serverless
+mongoose.set("bufferCommands", false);
+mongoose.set("bufferMaxEntries", 0);
+
 const connect = async () => {
   try {
     console.log("🔄 Attempting MongoDB connection...");
@@ -68,8 +72,6 @@ const connect = async () => {
     await mongoose.connect(process.env.MONGO, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      bufferCommands: false,
-      bufferMaxEntries: 0,
       maxPoolSize: 10,
       family: 4,
     });
@@ -143,8 +145,6 @@ app.get("/api/force-connect", async (req, res) => {
     await mongoose.connect(process.env.MONGO, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      bufferCommands: false,
-      bufferMaxEntries: 0,
       maxPoolSize: 10,
       family: 4,
     });
