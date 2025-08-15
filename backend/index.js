@@ -1,11 +1,12 @@
+// @ts-nocheck
 import express from "express";
 import ImageKit from "imagekit";
 import cors from "cors";
 import mongoose from "mongoose";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 import userchat from "./models/userchat.js";
 import chat from "./models/chat.js";
-import { generateChatResponse } from './utils/chatHelper.js';  // Import chatHelper.js for AI logic
+import { generateChatResponse } from "./utils/chatHelper.js"; // Import chatHelper.js for AI logic
 const port = process.env.PORT || 3000;
 const app = express();
 
@@ -19,52 +20,72 @@ const supabase = createClient(
 const requireAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No token provided" });
     }
 
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const token = authHeader.split(" ")[1];
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: "Invalid token" });
     }
 
     req.user = { userId: user.id };
     next();
   } catch (error) {
-    console.error('Auth error:', error);
-    res.status(401).json({ error: 'Authentication failed' });
+    console.error("Auth error:", error);
+    res.status(401).json({ error: "Authentication failed" });
   }
 };
 
-app.use(cors({
+app.use(
+  cors({
     origin: [
-        'https://quantumchat-phi.vercel.app',
-        process.env.CLIENT_URL,
-        'http://localhost:5173',
-        'http://localhost:5174'
+      "https://quantumchat-phi.vercel.app",
+      process.env.CLIENT_URL,
+      "http://localhost:5173",
+      "http://localhost:5174",
     ],
     credentials: true,
-}));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  })
+);
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 const connect = async () => {
   try {
-    await mongoose.connect(process.env.MONGO);
-    console.log("connected to mongo db");
+    console.log("🔄 Attempting MongoDB connection...");
+    console.log("📝 MONGO env present:", !!process.env.MONGO);
+
+    if (!process.env.MONGO) {
+      throw new Error("MONGO environment variable is not set");
+    }
+
+    await mongoose.connect(process.env.MONGO, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+      maxPoolSize: 10,
+      family: 4,
+    });
+    console.log("✅ Connected to MongoDB successfully");
   } catch (err) {
-    console.log(err);
+    console.log("❌ MongoDB connection error:", err.message);
+    console.log("🔍 Full error:", err);
   }
 };
 
 const imagekit = new ImageKit({
-    urlEndpoint: process.env.IMAGE_KIT_ENDPOINT,
-    publicKey: process.env.IMAGE_KIT_PUBLIC_KEY,
-    privateKey: process.env.IMAGE_KIT_PRIVATE_KEY
+  urlEndpoint: process.env.IMAGE_KIT_ENDPOINT,
+  publicKey: process.env.IMAGE_KIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGE_KIT_PRIVATE_KEY,
 });
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.send({
     activeStatus: true,
     error: false,
@@ -72,58 +93,59 @@ app.get('/', (req, res) => {
 });
 
 // Health check endpoint (no auth required)
-app.get('/api/health', (req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({
-    status: 'OK',
+    status: "OK",
     timestamp: new Date().toISOString(),
-    message: 'Backend is running',
-    mongoStatus: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    message: "Backend is running",
+    mongoStatus:
+      mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
   });
 });
 
 // Database connection test endpoint
-app.get('/api/db-test', async (req, res) => {
+app.get("/api/db-test", async (req, res) => {
   try {
     const dbState = mongoose.connection.readyState;
     const states = {
-      0: 'Disconnected',
-      1: 'Connected',
-      2: 'Connecting',
-      3: 'Disconnecting'
+      0: "Disconnected",
+      1: "Connected",
+      2: "Connecting",
+      3: "Disconnecting",
     };
-    
+
     res.json({
-      status: 'OK',
+      status: "OK",
       mongoState: states[dbState],
       mongoReady: dbState === 1,
-      connectionString: process.env.MONGO ? 'Present' : 'Missing'
+      connectionString: process.env.MONGO ? "Present" : "Missing",
     });
   } catch (error) {
     res.status(500).json({
-      status: 'Error',
-      error: error.message
+      status: "Error",
+      error: error.message,
     });
   }
 });
 
 // Test auth endpoint
-app.get('/api/test-auth', requireAuth, (req, res) => {
+app.get("/api/test-auth", requireAuth, (req, res) => {
   res.json({
-    message: 'Authentication successful!',
-    userId: req.user.userId
+    message: "Authentication successful!",
+    userId: req.user.userId,
   });
 });
 
 app.get("/api/upload", (req, res) => {
-    try {
-        console.log('ImageKit authentication requested');
-        const result = imagekit.getAuthenticationParameters();
-        console.log('Authentication parameters generated:', result);
-        res.send(result);
-    } catch (error) {
-        console.error('ImageKit authentication error:', error);
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    console.log("ImageKit authentication requested");
+    const result = imagekit.getAuthenticationParameters();
+    console.log("Authentication parameters generated:", result);
+    res.send(result);
+  } catch (error) {
+    console.error("ImageKit authentication error:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post("/api/chats", requireAuth, async (req, res) => {
@@ -152,14 +174,17 @@ app.post("/api/chats", requireAuth, async (req, res) => {
       });
       await newUserChats.save();
     } else {
-      await userchat.updateOne({ userId: userId }, {
-        $push: {
-          chats: {
-            _id: savedChat._id,
-            title: text.substring(0, 40),
+      await userchat.updateOne(
+        { userId: userId },
+        {
+          $push: {
+            chats: {
+              _id: savedChat._id,
+              title: text.substring(0, 40),
+            },
           },
         }
-      });
+      );
     }
 
     res.status(201).json({ id: savedChat._id.toString() });
@@ -183,16 +208,18 @@ app.get("/api/userchats", requireAuth, async (req, res) => {
 app.get("/api/chat/:id", requireAuth, async (req, res) => {
   const userId = req.user.userId;
   const chatId = req.params.id;
-  
+
   console.log(`Fetching chat: ${chatId} for user: ${userId}`);
-  
+
   try {
     const chat1 = await chat.findOne({ _id: chatId, userId });
     if (!chat1) {
       console.log(`Chat not found: ${chatId}`);
       return res.status(404).json({ error: "Chat not found" });
     }
-    console.log(`Chat found: ${chatId}, history length: ${chat1.history?.length}`);
+    console.log(
+      `Chat found: ${chatId}, history length: ${chat1.history?.length}`
+    );
     res.status(200).send(chat1);
   } catch (err) {
     console.error(`Error fetching chat ${chatId}:`, err);
@@ -204,17 +231,22 @@ app.put("/api/chats/:id", requireAuth, async (req, res) => {
   const userId = req.user.userId;
   const { question, answer, img } = req.body;
   const newItems = [
-    ...(question ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }] : []),
+    ...(question
+      ? [{ role: "user", parts: [{ text: question }], ...(img && { img }) }]
+      : []),
     { role: "model", parts: [{ text: answer }] },
   ];
   try {
-    const updatedChat = await chat.updateOne({ _id: req.params.id, userId }, {
-      $push: {
-        history: {
-          $each: newItems,
-        }
+    const updatedChat = await chat.updateOne(
+      { _id: req.params.id, userId },
+      {
+        $push: {
+          history: {
+            $each: newItems,
+          },
+        },
       }
-    });
+    );
     res.status(200).send(updatedChat);
   } catch (err) {
     console.log(err);
@@ -222,11 +254,12 @@ app.put("/api/chats/:id", requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/generate-response', async (req, res) => {
+app.post("/api/generate-response", async (req, res) => {
   const { query } = req.body;
 
   try {
-    const { primary_response, follow_up_questions } = await generateChatResponse(query);
+    const { primary_response, follow_up_questions } =
+      await generateChatResponse(query);
 
     // Log the response and suggestions to check if the data is coming through correctly
     console.log(primary_response);
@@ -234,7 +267,7 @@ app.post('/api/generate-response', async (req, res) => {
 
     res.status(200).json({
       primary_response,
-      follow_up_questions
+      follow_up_questions,
     });
   } catch (err) {
     console.error("Error generating AI response:", err);
@@ -244,7 +277,7 @@ app.post('/api/generate-response', async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(401).send('Unauthenticated!');
+  res.status(401).send("Unauthenticated!");
 });
 
 app.listen(port, () => {
